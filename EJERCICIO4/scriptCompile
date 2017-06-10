@@ -1,0 +1,22 @@
+#!/bin/sh
+if test $# -eq 0
+then
+  echo "Usage Error: ./scriptCompile [filenameToCompile] [entrada] "
+  exit 1
+fi
+#Aqui compilamos el programa
+if gcc -c -Wall -Wshadow $1
+then
+  gcc -o ejecutable *.o
+fi
+
+
+#ejecutable
+if test $# -gt 1
+then
+  shift 1
+  ./ejecutable $*
+else
+  shift 1
+  ./ejecutable $*
+fi
