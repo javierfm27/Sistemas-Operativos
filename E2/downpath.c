@@ -9,12 +9,10 @@
 int
 makepath(char * buf, int len){
   char cwd[1*1024];
-  char * p;
+  char  pid[8];
   char * user;
-  long unsigned x;
   pid_t y;
 
-  printf("Estamos Editando\n");
   //Obtenemos el directorio actual
   if (getcwd(cwd, sizeof cwd) == NULL){
     return -1;
@@ -22,7 +20,6 @@ makepath(char * buf, int len){
   strcpy(buf,cwd);
   strcat(buf, "/");
   strcat(buf, "\0");
-  printf("%s\n",buf);
 
   //Añadimos el Usuario y el PID
   user = getenv("USER");
@@ -32,13 +29,16 @@ makepath(char * buf, int len){
   strcat(user, ".");
   strcat(buf, user);
   y = getpid();
+  if(sprintf(pid,"%d",y) < 0){
+    return -1;
+  }
+  strcat(buf,pid);
   return strlen(buf);
 }
 
 int
 main (int argc, char * argv[]){
   char buffer[2*1024]; //Buffer de 2kBytes
-  int x;
 
   if (makepath(buffer, sizeof buffer) < 0){
     errx(1, "makepath: error en la funcion");
