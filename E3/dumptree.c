@@ -7,24 +7,31 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <string.h>
+
+
+
 
 int
 leerfichero(char * fichname){
-  int fd;
-  char buf[1*1024];
-  int br;
+  int fd, br;
+  char buf[1024];
+
 
   fd = open(fichname, O_RDONLY);
   if (fd < 0){
     err(errno, "open in leerfichero: ");
   }
   //Bucle que leera del fichero
-  br = read(fd,buf, sizeof buf);
-  while(br > 0){
-    br = read(fd,buf, sizeof buf);
-    write(0, buf, sizeof buf);
+  for(;;){
+    br = read(fd,buf,sizeof(buf));
+    if (br == 0){
+      break;
+    }
+    if(write(0,buf,sizeof(buf)) != br){
+      break;
+    }
   }
-
   if(close(fd) < 0){
     err(errno,"close in leerfichero: ");
   };
@@ -32,23 +39,31 @@ leerfichero(char * fichname){
 }
 
 
+
+
 int
 leerdirectorio(char * dir){
   DIR * d;
   struct dirent * x;
 
+if((strcmp(dir,".") == 0) | (strcmp(dir,"..") ==0) ){
+    return 0;
+  }
+  printf("SE ABRE %s \n",dir);
   d = opendir(dir);
   if (d == NULL){
+    printf("PERO NO SE PUEDE %s\n",dir);
+    closedir(d);
     return 1;
   }
   //Bucle que ira llamando recursivamente
   while ((x = readdir(d)) != NULL){
+    printf("%s\n",x->d_name);
     if(x->d_type == DT_REG){
-      printf("%s\n",x->d_name);
-      leerfichero(x->d_name);
+      //leerfichero(x->d_name);
     }else if(x->d_type == DT_DIR){
-      printf("%s\n",x->d_name);
-      printf("TRABAJANDO EN ELLO\n");
+      printf("SI");
+      leerdirectorio(x->d_name);
     }
   }
   //Aqui cerramos Directorio
@@ -78,5 +93,7 @@ main (int argc, char * argv[]){
     printf("The program only aceppts one directory.\n");
     exit(1);
   }
-  printf("ESTAMOS TRABAJANDO PARA EL DIRECTORIO ACTUAL\n");
+  //Directorio por argumento
+  leerdirectorio(argv[1]);
+  exit(0);
 }
