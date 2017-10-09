@@ -46,27 +46,26 @@ leerdirectorio(char * dir){
   DIR * d;
   struct dirent * x;
 
-printf("DIRECTORIO: %s\n",dir);
+
 if((strcmp(dir,".") == 0) | (strcmp(dir,"..") ==0) ){
     return 0;
   }
   d = opendir(dir);
   if (d == NULL){
-    closedir(d);
-    return 1;
+    warn("opendir: %s",dir);
   }
   //Bucle que ira llamando recursivamente
   while ((x = readdir(d)) != NULL){
     printf("%s\n",x->d_name);
     if(x->d_type == DT_REG){
-      //leerfichero(x->d_name);
+      leerfichero(x->d_name);
     }else if(x->d_type == DT_DIR){
       leerdirectorio(x->d_name);
     }
   }
   //Aqui cerramos Directorio
   if (closedir(d) < 0){
-    return 1;
+    warn("closedir: ");
   }
   return 0;
 }
