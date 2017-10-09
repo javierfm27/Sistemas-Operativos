@@ -12,7 +12,7 @@
 
 
 
-int
+static int
 leerfichero(char * fichname){
   int fd, br;
   char buf[1024];
@@ -41,7 +41,7 @@ leerfichero(char * fichname){
 
 
 
-int
+static int
 leerdirectorio(char * dir){
   DIR * d;
   struct dirent * x;
@@ -59,7 +59,7 @@ if((strcmp(dir,".") == 0) | (strcmp(dir,"..") ==0) ){
   while ((x = readdir(d)) != NULL){
     printf("%s\n",x->d_name);
     if(x->d_type == DT_REG){
-      leerfichero(x->d_name);
+      //leerfichero(x->d_name);
     }else if(x->d_type == DT_DIR){
       leerdirectorio(x->d_name);
     }
