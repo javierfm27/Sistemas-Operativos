@@ -9,69 +9,93 @@
 #include <dirent.h>
 #include <string.h>
 
+static char *
+makepath (char * directorio, char * nameDir)
+{
+  int size;
+  char * path;
 
+  if (nameDir != NULL){
+    size = strlen(directorio) + 1 + strlen(nameDir) + 1;
+    path = malloc(size);
+    strcpy(path,directorio);
+    strcat(path,"/");
+    strcat(path,nameDir);
+    return path;
+  }else{
+    size = strlen(directorio);
+    path = malloc(size);
+    strcpy(path,directorio);
+    return path;
+  }
+}
 
 
 static int
-leerfichero(char * fichname){
+leerfichero(char * fichname)
+{
   int fd, br;
   char buf[1024];
 
-  printf("es lo que tenemos %s \n",fichname);
   fd = open(fichname, O_RDONLY);
   if (fd < 0){
-    err(errno, "open in leerfichero: ");
+    warn("open: %s\n",fichname);
   }
-  //Bucle que leera del fichero
   for(;;){
     br = read(fd,buf,sizeof(buf));
-    if (br == 0){
+    if(br==0){
       break;
     }
-    if(write(0,buf,sizeof(buf)) != br){
+    if (write(0,buf,br) != br){
       break;
     }
   }
+
   if(close(fd) < 0){
-    err(errno,"close in leerfichero: ");
-  };
+    warn("close: %s\n",fichname);
+  }
   return 0;
 }
 
-char *
-makepath(char * dirname, char * dir)
-{
-    return dir;
-}
+
 
 
 static int
-leerdirectorio(char * dirname,char * dir){
+leerdirectorio(char * dir,char * name)
+{
   DIR * d;
   struct dirent * x;
+  char * path;
 
-
-if((strcmp(dir,".") == 0) | (strcmp(dir,"..") ==0) ){
-    return 0;
-  }
-  //Vamos a ver el PATH
-  if (dir != NULL){
-    dir = makepath(dirname,dir);
-  }
-  d = opendir(dir);
-  if (d == NULL){
-    warn("opendir: %s",dir);
-  }
-  //Bucle que ira llamando recursivamente
-  while ((x = readdir(d)) != NULL){
-    printf("%s\n",x->d_name);
-    if(x->d_type == DT_REG){
-      leerfichero(x->d_name);
-    }else if(x->d_type == DT_DIR){
-      leerdirectorio(x->d_name,dir);
+  //Comprobamos que no es ni ".", ni ".."
+  if (name != NULL){
+    if((strcmp(name,".") == 0) | (strcmp(name,"..") ==0) ){
+        return 0;
     }
   }
-  //Aqui cerramos Directorio
+  path = makepath(dir,NULL);
+  d = opendir(path);
+  if (d == NULL){
+    warn("opendir: %s", path);
+  }
+
+  //Bucle que llamara de manera recursiva
+  while((x = readdir(d)) != NULL){
+    path = makepath(dir, x->d_name);
+    if (((strcmp(x->d_name,"..")) == 0) | ((strcmp(x->d_name,".")) == 0)){
+      continue;
+    }else{
+      printf("%s\n",path);
+    }
+    if(x->d_type == DT_DIR){
+      leerdirectorio(path,x->d_name);
+    }else if(x->d_type == DT_REG){
+      leerfichero(path);
+    }
+    free(path);
+  }
+
+  //Cerramos Directorio
   if (closedir(d) < 0){
     warn("closedir: ");
   }
@@ -80,25 +104,24 @@ if((strcmp(dir,".") == 0) | (strcmp(dir,"..") ==0) ){
 
 
 
-
-
 int
-main (int argc, char * argv[]){
-  char  dir[1*100];
+main (int argc, char * argv[])
+{
+  char dir[1*1024];
 
-  if (argc == 1){
-    if(getcwd(dir,sizeof dir) == NULL){
-      err(errno, "getcwd: ");
+  if(argc == 1){
+    getcwd(dir,sizeof(dir));
+    if (dir == NULL){
+      warn("Get Current Dir Name: ");
     }
-    if(leerdirectorio(dir,NULL) != 0){
-      err(errno, "leerdirectorio: ");
-    }
-    exit(0);
-  }else if(argc > 2){
-    printf("The program only aceppts one directory.\n");
+    leerdirectorio(dir,NULL);
+  }else if (argc > 2){
+    printf("The program only accepts one directory\n");
     exit(1);
   }
-  //Directorio por argumento
-  leerdirectorio(argv[1],NULL);
+  //Directorio Por argumento
+  if(leerdirectorio(argv[1],NULL) < 0){
+    exit(1);
+  }
   exit(0);
 }
