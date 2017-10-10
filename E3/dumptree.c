@@ -95,6 +95,7 @@ leerdirectorio(char * dir,char * name)
     free(path);
   }
 
+
   //Cerramos Directorio
   if (closedir(d) < 0){
     warn("closedir: ");
@@ -114,6 +115,7 @@ main (int argc, char * argv[])
     if (dir == NULL){
       warn("Get Current Dir Name: ");
     }
+    printf("%p\n",dir);
     leerdirectorio(dir,NULL);
   }else if (argc > 2){
     printf("The program only accepts one directory\n");
