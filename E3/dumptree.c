@@ -38,17 +38,25 @@ leerfichero(char * fichname){
   return 0;
 }
 
-
+char *
+makepath(char * dirname, char * dir)
+{
+    return dir;
+}
 
 
 static int
-leerdirectorio(char * dir){
+leerdirectorio(char * dirname,char * dir){
   DIR * d;
   struct dirent * x;
 
 
 if((strcmp(dir,".") == 0) | (strcmp(dir,"..") ==0) ){
     return 0;
+  }
+  //Vamos a ver el PATH
+  if (dir != NULL){
+    dir = makepath(dirname,dir);
   }
   d = opendir(dir);
   if (d == NULL){
@@ -60,7 +68,7 @@ if((strcmp(dir,".") == 0) | (strcmp(dir,"..") ==0) ){
     if(x->d_type == DT_REG){
       leerfichero(x->d_name);
     }else if(x->d_type == DT_DIR){
-      leerdirectorio(x->d_name);
+      leerdirectorio(x->d_name,dir);
     }
   }
   //Aqui cerramos Directorio
@@ -82,7 +90,7 @@ main (int argc, char * argv[]){
     if(getcwd(dir,sizeof dir) == NULL){
       err(errno, "getcwd: ");
     }
-    if(leerdirectorio(dir) != 0){
+    if(leerdirectorio(dir,NULL) != 0){
       err(errno, "leerdirectorio: ");
     }
     exit(0);
@@ -91,6 +99,6 @@ main (int argc, char * argv[]){
     exit(1);
   }
   //Directorio por argumento
-  leerdirectorio(argv[1]);
+  leerdirectorio(argv[1],NULL);
   exit(0);
 }
