@@ -67,6 +67,7 @@ leerdirectorio(char * dir,char * name)
   struct dirent * x;
   char * path;
 
+  printf("%s\n",dir);
   //Comprobamos que no es ni ".", ni ".."
   if (name != NULL){
     if((strcmp(name,".") == 0) | (strcmp(name,"..") ==0) ){
@@ -84,12 +85,11 @@ leerdirectorio(char * dir,char * name)
     path = makepath(dir, x->d_name);
     if (((strcmp(x->d_name,"..")) == 0) | ((strcmp(x->d_name,".")) == 0)){
       continue;
-    }else{
-      printf("%s\n",path);
     }
     if(x->d_type == DT_DIR){
       leerdirectorio(path,x->d_name);
     }else if(x->d_type == DT_REG){
+      printf("%s\n",path);
       leerfichero(path);
     }
     free(path);
@@ -115,8 +115,8 @@ main (int argc, char * argv[])
     if (dir == NULL){
       warn("Get Current Dir Name: ");
     }
-    printf("%p\n",dir);
     leerdirectorio(dir,NULL);
+    exit(0);
   }else if (argc > 2){
     printf("The program only accepts one directory\n");
     exit(1);
