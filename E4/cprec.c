@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 static int permsDir;
-static int permsFich;
+mode_t  permsFich;
 
 static int
 checkargv(char * fichname){
@@ -47,6 +47,17 @@ copiaFich(char * fichSrc, char * fichDst)
   return -1;
 }
 
+static void permisosFunc(char * stringPermisos)
+{
+  int permsInt;
+  mode_t prueba;
+
+  //Lo primero es pasarlo a entero
+  permsInt = atoi(stringPermisos);
+  printf("%d\n",permsInt);
+  prueba = permsInt;
+  printf("%o\n",prueba);
+}
 
 int
 main (int argc, char * argv[]){
@@ -57,7 +68,9 @@ main (int argc, char * argv[]){
   if(argc == 5){
     x = checkargv(argv[3]);
     permsDir = atoi(argv[1]);
-    permsFich = atoi(argv[2]);
+    //permsFich = atoi(argv[2]);
+    permisosFunc(argv[2]);
+    exit(0); ///////////////////////////////////////////////////////////////////////////7777
     if (x < 0){
       warn("checkargv: %s",argv[3]); //Comprobamos si es directorio o fichero lo que nos estan proporcionando
     }else if(x > 0){
