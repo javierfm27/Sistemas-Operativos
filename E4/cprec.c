@@ -94,6 +94,7 @@ lecturaDir(char * dirSrc, char * dirDst)
   char * p;
   char * f;
   char * path;
+  char * pathDestino;
 
   p = makepath(dirSrc,pathPunto);
   f = makepath(dirSrc,pathPuntoPunto);
@@ -104,13 +105,30 @@ lecturaDir(char * dirSrc, char * dirDst)
     free(f);
   }
   //Abrimos el Directorio
+  path = makepath(dirSrc,NULL);
   d = opendir(dirSrc);
   if (d == NULL){
     warn("opendir: %s",dirSrc);
   }
   //Bucle que leera el directorio que le pasamos por argumento
   while((x = readdir(d)) != NULL){
-    path = makepath /////::::::::::::::::::AAAAAAAAAAAAAAAAAQUUIIIIIIIIIIIIIIIIII TAS QUEDAOOOOOOOOOOOo
+    path = makepath (dirSrc, x->d_name);
+    pathDestino = makepath(dirDst,x->d_name);
+    if  (((strcmp(x->d_name,"..")) == 0) | ((strcmp(x->d_name,".")) == 0)){
+      continue;
+    }
+    if(x->d_type == DT_DIR){
+      //Aqui habra una llamada recursiva y hacemos el Dir
+      if(mkdir(pathDestino,permsDir) < 0){
+        warn("Error al crear directorio: ");
+      }
+      lecturaDir(path,pathDestino);
+    }else if(x->d_type == DT_REG){
+      //Aqui copiamos el fichero
+      printf("Hacemos una copia del fichero con path %s al destino %s\n",path,dirDst);
+    }
+    free(path);
+    free(pathDestino);
   }
 
   //Cerramos Dir
@@ -137,11 +155,14 @@ main (int argc, char * argv[]){
       }
     }else{
       printf("Directorio Recursivo\n");
+      if(mkdir(argv[4],permsDir)<0){
+        warn("mkdir in main: ");
+      }
       if(lecturaDir(argv[3],argv[4]) < 0){
         errx(1,"Error al copiar el Directorio %s",argv[3]);
       }
+      exit(0);
     }
-    return 0;
   }else{
     errx(1,"[octal permission][octal permission][src path o file][dest path o file]");
   }
