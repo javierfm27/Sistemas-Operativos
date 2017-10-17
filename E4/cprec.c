@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <err.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -48,7 +47,7 @@ checkargv(char * fichname){
   return -1;
 }
 //-------------------------------------------------------------------------------------------------------------------------------
-static int
+void
 copiaFich(char * fichSrc, char * fichDst)
 {
   struct stat stDst;
@@ -61,10 +60,18 @@ copiaFich(char * fichSrc, char * fichDst)
     if((fdDst = open(fichDst,O_WRONLY | O_TRUNC | O_CREAT,permsFich))< 0 ){
       warn("Error en Open al Crear: %s",fichDst);
     }
-    //Abrimos el origen
-    if((fdSrc = open(fichSrc,O_RDONLY)) < 0){
-      warn("Error al Abrir: %s",fichSrc);
+  }else{
+    if (chmod(fichDst,permsFich) < 0){
+      warn("chmod in copiaFich: ");
     }
+    if((fdDst = open(fichDst,O_WRONLY|O_TRUNC)) < 0){
+      warn("open in chmod : ");
+    }
+  }
+  //Abrimos el origen
+  if((fdSrc = open(fichSrc,O_RDONLY)) < 0){
+    warn("Error al Abrir: %s",fichSrc);
+  }
 
   //Ahora Realizamos la copia del Fichero
   for(;;){
@@ -80,8 +87,6 @@ copiaFich(char * fichSrc, char * fichDst)
     if((close(fdDst) < 0) | (close(fdSrc)< 0)){
       warn("close: ");
     }
-  }
-  return 0;
 }
 //-------------------------------------------------------------------------------------------------------------------------------
 static int
@@ -94,6 +99,7 @@ lecturaDir(char * dirSrc, char * dirDst)
   char * p;
   char * f;
   char * path;
+  struct stat st;
   char * pathDestino;
 
   p = makepath(dirSrc,pathPunto);
@@ -118,14 +124,20 @@ lecturaDir(char * dirSrc, char * dirDst)
       continue;
     }
     if(x->d_type == DT_DIR){
-      //Aqui habra una llamada recursiva y hacemos el Dir
-      if(mkdir(pathDestino,permsDir) < 0){
-        warn("Error al crear directorio: ");
+      //Aqui habra una llamada recursiva y hacemos el Dir, comprobamos si existe y cambiamos Permisos
+      if(stat(pathDestino,&st) < 0){
+        if(mkdir(pathDestino,permsDir) < 0){
+          warn("Error al crear directorio: ");
+        }
+      }else{
+        if(chmod(pathDestino,permsDir) < 0){
+          warn("chmod in lecturaDir: ");
+        }
       }
       lecturaDir(path,pathDestino);
     }else if(x->d_type == DT_REG){
       //Aqui copiamos el fichero
-      printf("Hacemos una copia del fichero con path %s al destino %s\n",path,dirDst);
+      copiaFich(path,pathDestino);
     }
     free(path);
     free(pathDestino);
@@ -135,14 +147,14 @@ lecturaDir(char * dirSrc, char * dirDst)
   if (closedir(d) < 0){
     warn("closedir: ");
   }
-  return -1;
+  return 0;
 }
 //-------------------------------------------------------------------------------------------------------------------------------
 int
 main (int argc, char * argv[]){
   int x;
+  struct stat st;
 
-  // ¡¡¡¡¡¡RECUERDA, NO UTILICES NINGUNA FUNCION DE STDIO,QUITA TODOS LOS PRINTFS !!!!!!!
   if(argc == 5){
     x = checkargv(argv[3]);
     permsDir = strtoul(argv[1],NULL,8);
@@ -150,13 +162,17 @@ main (int argc, char * argv[]){
     if (x < 0){
       warn("checkargv: %s",argv[3]); //Comprobamos si es directorio o fichero lo que nos estan proporcionando
     }else if(x > 0){
-      if(copiaFich(argv[3],argv[4]) < 0){
-        errx(1,"Error al copiar Fichero %s",argv[3]);
-      }
+      copiaFich(argv[3],argv[4]);
+      exit(0);
     }else{
-      printf("Directorio Recursivo\n");
-      if(mkdir(argv[4],permsDir)<0){
-        warn("mkdir in main: ");
+      if(stat(argv[4],&st) < 0){
+        if(mkdir(argv[4],permsDir)<0){
+          warn("mkdir in main: ");
+        }
+      }else{
+        if(chmod(argv[4],permsDir) < 0){
+          warn("chmod in main: ");
+        }
       }
       if(lecturaDir(argv[3],argv[4]) < 0){
         errx(1,"Error al copiar el Directorio %s",argv[3]);
