@@ -4,7 +4,46 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
+#include <unistd.h>
 
+struct ficherosCompilados{
+  char fichname[50];
+  int pid;
+};
+typedef struct ficherosCompilados ficherosCompilados;
+
+ficherosCompilados * arrayStruct[];
+
+//---------------------------------------------------------------------------------------------------------------------------------
+void
+compileFich(char * fichname,char * dir)
+{
+  int pid, sts;
+  char nameExec[100];
+  char * pathFich;
+
+  //Nombre ejecutable
+  strncpy(nameExec,fichname,(strlen(fichname - 2)));
+  strcat(nameExec,"\0");
+  //Path Fichero
+  pathFich = malloc(strlen(dir) + 1 + strlen(fichname));
+  strcpy(pathFich,dir);
+  strcat(pathFich,"/");
+  strcat(pathFich,fichname);
+  //Hacemos el fork
+  printf("NameExec: %s\n",nameExec);
+  printf("Path.C: %s\n\n",pathFich);
+  pid = fork();
+  switch (pid) {
+    case -1:
+      warn("fork: ");
+    case 0:
+      execl("/usr/bin/gcc","gcc","-o",nameExec,pathFich,NULL);
+    default:
+      //Hacemos el Free y deberiamos añadirlo al arrayStruct
+      free(pathFich);
+  }
+}
 //---------------------------------------------------------------------------------------------------------------------------------
 static int
 leerDir(char * path)
@@ -22,14 +61,19 @@ leerDir(char * path)
     if(((strcmp(de->d_name,"..")) == 0) | ((strcmp(de->d_name,".")) == 0)){
       continue;
     }
-    printf("%s\n",de->d_name);
+    //Llamamos al programa que compila
+    if(strstr(de->d_name,".c") != NULL){
+      printf("dir: %s\n",path);
+      compileFich(de->d_name,path);
+    }
+    continue;
   }
 
   //Close DIR
   if(closedir(f) < 0){
     warn("closedir in leerDir: ");
   }
-  return -1;
+  return 0;
 }
 //---------------------------------------------------------------------------------------------------------------------------------
 int
