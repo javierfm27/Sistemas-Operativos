@@ -151,13 +151,19 @@ leerDir(char * path)
 //---------------------------------------------------------------------------------------------------------------------------------
 int
 main (int argc, char * argv[]){
-  printf("PROGRAMA CCALL\n===============\n\n");
+  char buf[1024];
 
   if(argc > 2){
     errx(1,"Too much arguments.Example: ./ccall [path]");
   }else{
     if(argc == 1){
-      printf("El directorio actual\n");
+      if(getcwd(buf,sizeof buf) == NULL){
+          warn("getcwd: ");
+      }
+      if(leerDir(buf)< 0){
+        errx(1,"leerDir in main");
+      }
+      borrarLista();
     }else{
       if(leerDir(argv[1])< 0 ){
         errx(1,"leerDir in main");
