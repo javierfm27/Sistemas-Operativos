@@ -52,14 +52,16 @@ borrarLista()
   ficherosCompilados * p_aux;
   ficherosCompilados * p_borrado;
 
-  p_aux = lista;
-  while(p_aux->siguiente != NULL){
-    p_borrado = p_aux;
-    p_aux = p_aux->siguiente;
-    free(p_borrado);
+  if (lista != NULL){
+    p_aux = lista;
+    while(p_aux->siguiente != NULL){
+      p_borrado = p_aux;
+      p_aux = p_aux->siguiente;
+      free(p_borrado);
+    }
+    free(p_aux);
+    free(lista);
   }
-  free(p_aux);
-  free(lista);
 }
 //---------------------------------------------------------------------------------------------------------------------------------
 static void
@@ -71,21 +73,10 @@ statusProcess(int pid,int status)
     p = p->siguiente;
   }
   //Ponemos si compila o no
-  if(status < 0){
+  if(status > 0){
     printf("%s: no compila\n",p->fichname);
   }else{
     printf("%s: compila\n",p->fichname);
-  }
-}
-//---------------------------------------------------------------------------------------------------------------------------------
-static void
-waitSons() {
-  int i = 0, pid = 0, sts;
-
-  while(i < elementos){
-    pid = wait(&sts);
-    statusProcess(pid,sts);
-    i++;
   }
 }
 //---------------------------------------------------------------------------------------------------------------------------------
@@ -97,6 +88,9 @@ compileFich(char * fichname,char * dir)
   char * pathFich;
   char * cflag;
   int sizeExec;
+  int pidSon;
+  int sts;
+
 
   memset(nameExec,0,sizeof(nameExec));
   //Nombre ejecutable
@@ -125,7 +119,8 @@ compileFich(char * fichname,char * dir)
       if(addSon(pid,fichname) < 0){
         errx(1,"Error al añadir");
       }
-      waitSons();
+      pidSon = wait(&sts);
+      statusProcess(pidSon,sts);
   }
 }
 //---------------------------------------------------------------------------------------------------------------------------------
@@ -145,12 +140,14 @@ leerDir(char * path)
     if(((strcmp(de->d_name,"..")) == 0) | ((strcmp(de->d_name,".")) == 0)){
       continue;
     }
+    //Hay que ver si no se llama redir.c
+    if(strcmp(de->d_name,"redir.c") == 0){
+      continue;
+    }
     //Llamamos al programa que compila
     if(strstr(de->d_name,".c") != NULL){
       compileFich(de->d_name,path);
     }
-    continue;
-    printf("Cuantas veces pasa por aqui");
   }
 
   //Close DIR
@@ -176,6 +173,7 @@ main (int argc, char * argv[]){
       }
       borrarLista();
     }else{
+      printf("HOLA");
       if(leerDir(argv[1])< 0 ){
         errx(1,"leerDir in main");
       }
