@@ -3,6 +3,7 @@
 #include <err.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <string.h>
 #include <unistd.h>
@@ -53,14 +54,18 @@ borrarLista()
   ficherosCompilados * p_borrado;
 
   if (lista != NULL){
-    p_aux = lista;
-    while(p_aux->siguiente != NULL){
-      p_borrado = p_aux;
-      p_aux = p_aux->siguiente;
-      free(p_borrado);
+    if (elementos == 1){
+      free(lista);
+    }else{
+      p_aux = lista;
+      while(p_aux->siguiente != NULL){
+        p_borrado = p_aux;
+        p_aux = p_aux->siguiente;
+        free(p_borrado);
+      }
+      free(p_aux);
+      free(lista);
     }
-    free(p_aux);
-    free(lista);
   }
 }
 //---------------------------------------------------------------------------------------------------------------------------------
@@ -81,7 +86,30 @@ statusProcess(int pid,int status)
 }
 //---------------------------------------------------------------------------------------------------------------------------------
 static void
-compileFich(char * fichname,char * dir)
+egrepFork(char * word)
+{
+  int fd[2];
+  int pid;
+
+  if(pipe(fd) < 0){
+    warn("Error in pipe");
+  }
+  pid = fork();
+  switch(pid){
+    case -1:
+      warn("fork: ");
+    case 0:
+      dup2(fd[0],0);
+      close(fd[0]);
+      execl("/bin/egrep","egrep",word,NULL);
+    default:
+      dup2(fd[1],2);
+      close(fd[1]);
+  }
+}
+//---------------------------------------------------------------------------------------------------------------------------------
+static void
+compileFich(char * fichname,char * dir,char * word)
 {
   int pid;
   char nameExec[50];
@@ -90,8 +118,9 @@ compileFich(char * fichname,char * dir)
   int sizeExec;
   int pidSon;
   int sts;
+  int flagWord;
 
-
+  flagWord = strcmp(word,"");
   memset(nameExec,0,sizeof(nameExec));
   //Nombre ejecutable
   sizeExec = strlen(fichname) - 2;
@@ -107,6 +136,9 @@ compileFich(char * fichname,char * dir)
     case -1:
       warn("fork: ");
     case 0:
+      if (flagWord != 0){
+        egrepFork(word);
+      }
       if((cflag = getenv("CFLAGS")) == NULL ){
         execl("/usr/bin/gcc","gcc","-o",nameExec,pathFich,NULL);
       }else{
@@ -125,8 +157,7 @@ compileFich(char * fichname,char * dir)
 }
 //---------------------------------------------------------------------------------------------------------------------------------
 static int
-leerDir(char * path)
-{
+leerDir(char * path,char * word) {
   DIR * f;
   struct dirent * de;
 
@@ -146,7 +177,7 @@ leerDir(char * path)
     }
     //Llamamos al programa que compila
     if(strstr(de->d_name,".c") != NULL){
-      compileFich(de->d_name,path);
+      compileFich(de->d_name,path,word);
     }
   }
 
@@ -157,27 +188,55 @@ leerDir(char * path)
   return 0;
 }
 //---------------------------------------------------------------------------------------------------------------------------------
+static int
+isDirectory(char * argumento){
+  struct stat st;
+
+  if(stat(argumento,&st) < 0){
+    return -1;
+  }
+  if(S_ISDIR(st.st_mode)){
+    return 0;
+  }else{
+    return 1;
+  }
+}
+//---------------------------------------------------------------------------------------------------------------------------------
 int
 main (int argc, char * argv[]){
   char buf[1024];
+  int isDir;
+  char word[20];
 
-  if(argc > 2){
-    errx(1,"Too much arguments.Example: ./ccall [path]");
+  memset(word,0,sizeof word);
+  if(getcwd(buf,sizeof buf) == NULL){
+      warn("getcwd: ");
+  }
+  if(argc > 3){
+    errx(1,"Too much arguments.Example: ./redir [path][word]");
   }else{
     if(argc == 1){
-      if(getcwd(buf,sizeof buf) == NULL){
-          warn("getcwd: ");
-      }
-      if(leerDir(buf)< 0){
+      if(leerDir(buf,word)< 0){
         errx(1,"leerDir in main");
+      }
+      borrarLista();
+    }else if(argc == 2){
+      isDir = isDirectory(argv[1]);
+      if (isDir == 0){
+        if(leerDir(argv[1],word)< 0 ){
+          errx(1,"leerDir in main");
+        }
+      }else{
+        strcpy(word,argv[1]);
+        if(leerDir(buf,word) < 0){
+          errx(1,"leerDir in main");
+        }
       }
       borrarLista();
     }else{
-      printf("HOLA");
-      if(leerDir(argv[1])< 0 ){
+      if(leerDir(argv[1],argv[2]) < 0 ){
         errx(1,"leerDir in main");
       }
-      borrarLista();
     }
     exit(0);
   }
