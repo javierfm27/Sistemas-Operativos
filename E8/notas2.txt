@@ -1,0 +1,6 @@
+#Nombre     Ejer2
+Gorka       2
+Enrique     2
+Paco        8
+Pedro       3
+Miguel      2
