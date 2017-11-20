@@ -4,7 +4,6 @@
 if test $# -eq 4
 then
   touch notasfinales.txt
-  echo "#Nombre   Ejer1   Ejer2   Ejer3   Ejer4   Final" >notasfinales.txt
 else
   echo usage error: $0 [file1.txt] [file2.txt] [file3.txt] [file4.txt]
   exit 1
@@ -13,11 +12,15 @@ fi
 #comando-> awk '$0 ~ /^#/ {next} {print $1}' $1 | sort
 for i in $*
 do
-  alumnos=$alumnos`awk '$0 ~ /^#/ {next} {printf ("%s\n",$1)}' $i | sort -u`
-  alumnos=$alumnos`echo -E '\n'`
+  awk '$0 ~ /^#/ {next} {printf ("%s\n",$1)}' $i | sort -u >>alumnos.txt
 done
-alumnos=`echo $alumnos | sort -u`
+alumnos=`cat alumnos.txt | sort -u`
+rm alumnos.txt
+#Ya tenemos los alumnos, ahora vamos a hacer nuestro fichero de notasfinales
+echo "#Nombre   Ejer1   Ejer2   Ejer3   Ejer4   Final" >notasfinales.txt
+#Vamos a conseguir las notas
 for i in $alumnos
 do
-  echo $i
+  echo $i >>notasfinales.txt
+  awk '$0 ~ /'$i'/ {print $2}' $* >>notasfinales.txt
 done
