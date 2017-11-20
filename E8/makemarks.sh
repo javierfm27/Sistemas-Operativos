@@ -24,7 +24,13 @@ do
   echo -n $i >>notasfinales.txt
   for j in $*
   do
-    awk '$0 ~ /'$i'/ {printf ("\t\t%s\t",$2)}' $j >>notasfinales.txt
+    egrep $i $j >/dev/null
+    if test $? -eq 1
+    then
+      echo -n "   -" >>notasfinales.txt
+    else
+      awk '$0 ~ /'$i'/ {printf ("\t\t%s\t",$2)}' $j >>notasfinales.txt
+    fi
   done
   awk '$0 ~ /'$i'/{
       i += 1;
