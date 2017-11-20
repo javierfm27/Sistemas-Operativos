@@ -1,25 +1,6 @@
-#Nombre   Ejer1   Ejer2   Ejer3   Ejer4   Final
-Enrique
-1
-2
-0
-3
-Gorka
-2
-0
-2
-Miguel
-4
-2
-4
-2
-Paco
-8
-8
-8
-8
-Pedro
-5
-3
-7
-9
+#Nombre		Ejer1		Ejer2		Ejer3		Ejer4		Final
+Enrique		1			2			0			3		1.500000
+Gorka		2			0			2		NP
+Miguel		4			2			4			2		3.000000
+Paco		8			8			8			8		8.000000
+Pedro		5			3			7			9		6.000000

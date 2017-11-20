@@ -17,10 +17,25 @@ done
 alumnos=`cat alumnos.txt | sort -u`
 rm alumnos.txt
 #Ya tenemos los alumnos, ahora vamos a hacer nuestro fichero de notasfinales
-echo "#Nombre   Ejer1   Ejer2   Ejer3   Ejer4   Final" >notasfinales.txt
+echo "#Nombre\t\tEjer1\t\tEjer2\t\tEjer3\t\tEjer4\t\tFinal" >notasfinales.txt
 #Vamos a conseguir las notas
 for i in $alumnos
 do
-  echo $i >>notasfinales.txt
-  awk '$0 ~ /'$i'/ {print $2}' $* >>notasfinales.txt
+  echo -n $i >>notasfinales.txt
+  for j in $*
+  do
+    awk '$0 ~ /'$i'/ {printf ("\t\t%s\t",$2)}' $j >>notasfinales.txt
+  done
+  awk '$0 ~ /'$i'/{
+      i += 1;
+      sumNota = sumNota + $2;
+  }
+  END {
+    if (i <'$#'){
+      printf ("\tNP\n");
+    }else{
+      printf ("\t%f\n",sumNota/'$#');
+    }
+  }' $* >>notasfinales.txt
 done
+exit 0
