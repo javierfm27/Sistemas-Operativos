@@ -11,11 +11,13 @@ else
 fi
 #Nos quedamos con todos los alumnos, en una variable para luego asi saber quien no realizo la entrega de algun ejercicio
 #comando-> awk '$0 ~ /^#/ {next} {print $1}' $1 | sort
-x=$x`awk '$0 ~ /^#/ {next} {printf ("%s\n",$1)}' $2 | sort -u`
-x=$x`echo -E "\n"`
-x=$x`awk '$0 ~ /^#/ {next} {printf ("%s\n",$1)}' $1 | sort -u`
-for i in $x
+for i in $*
+do
+  alumnos=$alumnos`awk '$0 ~ /^#/ {next} {printf ("%s\n",$1)}' $i | sort -u`
+  alumnos=$alumnos`echo -E '\n'`
+done
+alumnos=`echo $alumnos | sort -u`
+for i in $alumnos
 do
   echo $i
 done
-echo -e 'javi\tSU'
